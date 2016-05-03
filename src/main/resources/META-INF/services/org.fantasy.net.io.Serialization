@@ -1,0 +1,2 @@
+unsafe=org.fantasy.net.io.UnsafeSerialization
+jdk=org.fantasy.net.io.JdkSerialization
