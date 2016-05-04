@@ -1,6 +1,7 @@
 package org.fantasy.net.io.unsafe;
 
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
@@ -27,7 +28,6 @@ public class ClassIntrospector implements Serializable {
 
 	private static final long serialVersionUID = 8418139878863548752L;
 	private static final Logger LOG = Logger.getLogger(ClassIntrospector.class);
-	
 	private static final Map<WeakKey<Class<?>>, Object> CACHE = new HashMap<WeakKey<Class<?>>, Object>();
 	private static final ReferenceQueue<Class<?>> QUEUE = new ReferenceQueue<Class<?>>();
 	private static final Object PENDING_MARKER = new Object();
@@ -50,6 +50,12 @@ public class ClassIntrospector implements Serializable {
 		this.fieldList = getSerializableFields(clazz);
 	}
 	
+	private static void clearQueue() {
+		Reference<? extends Class<?>> ref = null;
+		while((ref = QUEUE.poll()) != null) {
+			CACHE.remove(ref);
+		}
+	}
 	/**
 	 * 自省Class对象
 	 * @param clazz
@@ -62,6 +68,7 @@ public class ClassIntrospector implements Serializable {
 		ClassIntrospector ci = null;
 		WeakKey<Class<?>> key = new WeakKey<Class<?>>(clazz, QUEUE);
 		synchronized(CACHE) {
+			clearQueue();
 			do {
 				Object value = CACHE.get(key);
 				if(value instanceof Reference)
