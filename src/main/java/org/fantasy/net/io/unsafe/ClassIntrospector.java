@@ -50,6 +50,9 @@ public class ClassIntrospector implements Serializable {
 		this.fieldList = getSerializableFields(clazz);
 	}
 	
+	/**
+	 * clear queue
+	 */
 	private static void clearQueue() {
 		Reference<? extends Class<?>> ref = null;
 		while((ref = QUEUE.poll()) != null) {
