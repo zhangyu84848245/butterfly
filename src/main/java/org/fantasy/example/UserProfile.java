@@ -4,18 +4,15 @@ import java.io.Serializable;
 import java.util.Date;
 
 public class UserProfile implements Serializable {
-
 	private static final long serialVersionUID = 1L;
 	private short age;
 	private String phone;
 	private byte sex;
 	private Date birthday;
 	private String address;
-	
 	public UserProfile() {
 		
 	}
-	
 	public short getAge() {
 		return age;
 	}
@@ -46,5 +43,4 @@ public class UserProfile implements Serializable {
 	public void setAddress(String address) {
 		this.address = address;
 	}
-
 }

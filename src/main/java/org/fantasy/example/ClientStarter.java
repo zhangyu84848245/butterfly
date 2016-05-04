@@ -13,9 +13,9 @@ public class ClientStarter {
 		User user = userService.getUserById(1);
 		userService.deleteUser(user);
 		userService.addUser(user);
-		Foo foo = (Foo)bootstrap.getBeanFactory().getBeanInstance("foo");
-		foo.hello();
-		foo.bar("hello");
+//		Foo foo = (Foo)bootstrap.getBeanFactory().getBeanInstance("foo");
+//		foo.hello();
+//		foo.bar("hello");
 		try {
 			System.in.read();
 		} catch (IOException e) {
