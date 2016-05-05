@@ -1,8 +1,6 @@
 package org.fantasy.net.io.unsafe;
 
 import java.io.DataInput;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UTFDataFormatException;
@@ -18,6 +16,7 @@ public class UnsafeInputStream extends InputStream implements DataInput, IndexAw
 	private int readIndex;
 	private long memoryAddress;
 	private int capacity;
+	protected int mark = 0;
 	
 	public UnsafeInputStream(ByteBuffer buffer) {
 		if(!buffer.isDirect())
@@ -50,14 +49,13 @@ public class UnsafeInputStream extends InputStream implements DataInput, IndexAw
 		readFully(b, 0, b.length);
 	}
 
-	public void readFully(byte[] b, int offset, int length) throws IOException {
-		if(offset < 0)
-			throw new IllegalArgumentException("offset: " + offset + " (expected: >= 0)");
-		if(length < 0)
-			throw new IllegalArgumentException("length: " + length + " (expected: > 0)");
-		if(readIndex + length > getCapacity())
-			throw new IndexOutOfBoundsException(String.format("pos: %d (expected: range(0, %d))", readIndex, getCapacity()));
-		MemoryUtils.copyMemory(null, computeMemoryOffset(readIndex), b, offset + MemoryUtils.arrayBaseOffset(), length);
+	public void readFully(byte[] buf, int offset, int length) throws IOException {
+		if(buf == null) {
+			throw new NullPointerException();
+		} else if(offset < 0 || length < 0 || length > buf.length - offset) {
+			throw new IndexOutOfBoundsException();
+		}
+		MemoryUtils.copyMemory(null, computeMemoryOffset(readIndex), buf, offset + MemoryUtils.arrayBaseOffset(), length);
 		readIndex += length;
 	}
 
@@ -202,7 +200,7 @@ public class UnsafeInputStream extends InputStream implements DataInput, IndexAw
 	}
 
 	public int available() throws IOException {
-		return getCapacity() - (readIndex + 1);
+		return getCapacity() - readIndex;
 	}
 
 	@Override
@@ -213,6 +211,7 @@ public class UnsafeInputStream extends InputStream implements DataInput, IndexAw
 		readIndex = 0;
 		memoryAddress = 0;
 		capacity = 0;
+		mark = 0;
 	}
 
 	public int read(byte[] b) throws IOException {
@@ -225,18 +224,27 @@ public class UnsafeInputStream extends InputStream implements DataInput, IndexAw
 	}
 
 	public long skip(long n) throws IOException {
-		throw new UnsupportedOperationException();
+		if(n > capacity)
+			throw new IndexOutOfBoundsException();
+		int r = capacity - readIndex;
+		int skipBytes = (r >= (int)n ? (int)n : r);
+		readIndex += skipBytes;
+		return skipBytes;
 	}
 
-	public synchronized void mark(int readlimit) {
+	public void mark(int readlimit) {
+		if(readlimit > capacity)
+			throw new IndexOutOfBoundsException(String.format("mark: %d (expected: range(0, %d))", readIndex, getCapacity()));
+		mark = readlimit;
 	}
 
 	
 	public synchronized void reset() throws IOException {
+		readIndex = mark;
 	}
 
 	public boolean markSupported() {
-		return false;
+		return true;
 	}
 
 	public int getIndex() {

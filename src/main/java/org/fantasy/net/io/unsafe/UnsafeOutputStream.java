@@ -78,7 +78,6 @@ public class UnsafeOutputStream extends OutputStream implements MarkableDataOutp
 		if(newCapacity > oldCapacity) {
 			ByteBuffer oldBuffer = this.buffer;
 			ByteBuffer newBuffer = ByteBuffer.allocateDirect(newCapacity);
-//			oldBuffer.position(0).limit(oldCapacity);
 			oldBuffer.clear();
 			newBuffer.position(0).limit(oldCapacity);
 			newBuffer.put(oldBuffer);
