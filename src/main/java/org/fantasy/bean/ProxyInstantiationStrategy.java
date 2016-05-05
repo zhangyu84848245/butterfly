@@ -11,8 +11,6 @@ import org.fantasy.bean.proxy.ProxyFactory;
 import org.fantasy.bean.proxy.ProxyInvoker;
 import org.fantasy.common.FactoryProvider;
 import org.fantasy.common.MethodDescriptor;
-import org.fantasy.common.RequestObject;
-import org.fantasy.common.ResponseObject;
 import org.fantasy.conf.Configuration;
 import org.fantasy.net.RemoteException;
 import org.fantasy.net.client.RpcClient;
