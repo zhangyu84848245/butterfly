@@ -17,13 +17,13 @@ import org.fantasy.service.ServiceStateChangeEvent;
 import org.fantasy.service.ServiceStateChangeListener;
 
 public class ConfigurableBootstrap extends BeanFactoryBootstrap {
-
-//	private Class<?> annotationClass;
-
+	
+	ServiceRegistryBootstrap registryBootstrap;
+	RpcBootstrap rpcBootstrap;
+	
 	public ConfigurableBootstrap() {
 		super();
 		support.addStateChangeListener(new ServiceStateChangeListener() {
-			private ServiceRegistryBootstrap registryBootstrap;
 			public void stateChange(ServiceStateChangeEvent event) {
 				STATE state = event.getState();
 				if(state == STATE.INITIALIZED) {
@@ -42,13 +42,13 @@ public class ConfigurableBootstrap extends BeanFactoryBootstrap {
 								return new ConsumerBean(beanId, beanClassName);
 						}
 					});
+
 					if(isProvider) {
-						RpcBootstrap rpcBootstrap = new RpcBootstrap(getConf(), (BeanInstanceFactory)beanFactory);
+						rpcBootstrap = new RpcBootstrap(getConf(), (BeanInstanceFactory)beanFactory);
 						rpcBootstrap.setEndpoint(Endpoint.SERVER);
 						rpcBootstrap.start();
-					} else {
-						
 					}
+
 					registryBootstrap.addRegistryCallback(new RegistryCallback() {
 						public void execute(BeanFactoryContext context) {
 							if(isProvider)
@@ -64,8 +64,12 @@ public class ConfigurableBootstrap extends BeanFactoryBootstrap {
 		});
 	}
 
-//	public void setAnnotationClass(Class<?> annotationClass) {
-//		super.setAnnotationClass(annotationClass);
-//		this.annotationClass = annotationClass;
-//	}
+	public ServiceRegistryBootstrap getRegistryBootstrap() {
+		return registryBootstrap;
+	}
+
+	public RpcBootstrap getRpcBootstrap() {
+		return rpcBootstrap;
+	}
+
 }
