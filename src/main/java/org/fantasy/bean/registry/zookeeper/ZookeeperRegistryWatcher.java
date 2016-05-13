@@ -57,7 +57,7 @@ public class ZookeeperRegistryWatcher extends AbstractService implements Watcher
 	}
 
 	public void serviceStop() {
-
+		close();
 		super.serviceStop();
 	}
 
@@ -66,11 +66,19 @@ public class ZookeeperRegistryWatcher extends AbstractService implements Watcher
 			case None:
 				handleEvent(event);
 				break;
-			case NodeCreated:
-			case NodeDeleted: 
-			case NodeDataChanged:
-			case NodeChildrenChanged:
+			case NodeCreated: {
 				break;
+			}
+			case NodeDeleted: {
+				break;
+			}
+			case NodeDataChanged: {
+				System.out.println("NodeDataChanged");
+				break;
+			}
+			case NodeChildrenChanged: {
+				break;
+			}
 		}
 	}
 
@@ -137,6 +145,10 @@ public class ZookeeperRegistryWatcher extends AbstractService implements Watcher
 
 	public void setData(RegistryKey key, Set<RegistryValue> dataSet) throws Exception {
 		zookeeper.setData(key, dataSet);
+	}
+
+	public List<String> getChildren(RegistryKey key) {
+		return zookeeper.getChildren(key);
 	}
 
 }
