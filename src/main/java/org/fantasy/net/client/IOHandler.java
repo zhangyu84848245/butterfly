@@ -317,4 +317,10 @@ public class IOHandler {
 		}
 	}
 
+
+	public HeartbeatHandler getHeartbeatHandler() {
+		return heartbeatHandler;
+	}
+
+	
 }
