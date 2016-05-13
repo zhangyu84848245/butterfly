@@ -1,7 +1,5 @@
 package org.fantasy.example;
 
-import java.io.IOException;
-
 import org.fantasy.bean.bootstrap.client.ClientBootstrap;
 
 public class ClientStarter {
@@ -16,10 +14,11 @@ public class ClientStarter {
 		Foo foo = (Foo)bootstrap.getBeanFactory().getBeanInstance("foo");
 		foo.hello();
 		foo.bar("hello");
-		try {
-			System.in.read();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			System.in.read();
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+		bootstrap.stop();
 	}
 }
