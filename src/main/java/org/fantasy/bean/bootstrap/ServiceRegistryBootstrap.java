@@ -2,6 +2,7 @@ package org.fantasy.bean.bootstrap;
 
 
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -83,6 +84,12 @@ public class ServiceRegistryBootstrap extends AbstractService implements BeanReg
 	}
 
 	public void serviceStop() {
+		try {
+			registryFactory.close();
+			serviceRegistry.close();
+			beanFactoryContext.close();
+		} catch (IOException e) {
+		}
 		super.serviceStop();
 	}
 
