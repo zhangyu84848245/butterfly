@@ -1,5 +1,7 @@
 package org.fantasy.common;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -13,7 +15,7 @@ import org.fantasy.util.ClassUtils;
 import org.fantasy.util.ReflectionUtils;
 import org.fantasy.util.StringUtils;
 
-public class FactoryProvider<T> {
+public class FactoryProvider<T> implements Closeable {
 
 	private List<T> factory = new ArrayList<T>();
 	private ServiceLoader<T> serviceLoader;
@@ -62,4 +64,11 @@ public class FactoryProvider<T> {
 		}
 		return null;
 	}
+
+	public void close() throws IOException {
+		factory.clear();
+		factory = null;
+		serviceLoader = null;
+	}
+
 }
