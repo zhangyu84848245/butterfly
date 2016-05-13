@@ -31,6 +31,23 @@ public class ZkData implements RegistryValue, Serializable {
 			}
 		}
 	}
+	
+	public ZkData(String child) {
+		if(child == null)
+			throw new IllegalArgumentException(child);
+		String[] array = child.split(";");
+		if(array.length != 2)
+			throw new IllegalArgumentException(child);
+		String[] addressAndPort = array[0].split(":");
+		String address = addressAndPort[0];
+		int port = Integer.parseInt(addressAndPort[1]);
+		String method = array[1];
+		this.address = address;
+		this.port = port;
+		for(String m : method.substring(1, method.length() - 2).split(",")) {
+			methods.add(m);
+		}
+	}
 
 	public int getPort() {
 		return port;
