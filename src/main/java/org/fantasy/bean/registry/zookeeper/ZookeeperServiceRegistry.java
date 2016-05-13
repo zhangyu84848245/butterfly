@@ -278,7 +278,11 @@ public class ZookeeperServiceRegistry /** implements ServiceRegistry */ extends 
 		}
 	}
 	
-	List<String> getChildren(String path) {
+	public List<String> getChildren(RegistryKey key) {
+		return getChildren(key.getKey());
+	}
+
+	private List<String> getChildren(String path) {
 		RetryCounter counter = retryFactory.create();
 		for(;;) {
 			try {
@@ -303,9 +307,9 @@ public class ZookeeperServiceRegistry /** implements ServiceRegistry */ extends 
 	}
 
 	public void close() {
-		try {
-			deleteChild(Constant.ZOOKEEPER_REGISTRY_ROOT);
-		} catch (Exception e1) {}
+//		try {
+//			deleteChild(Constant.ZOOKEEPER_REGISTRY_ROOT);
+//		} catch (Exception e1) {}
 		
 		try {
 			zooKeeper.close();
@@ -315,6 +319,7 @@ public class ZookeeperServiceRegistry /** implements ServiceRegistry */ extends 
 		}
 	}
 	
+	@Deprecated
 	private void deleteChild(String path) throws Exception {
 		List<String> children = getChildren(path);
 		if(children.size() == 0) {
