@@ -64,6 +64,7 @@ public class RpcClient extends AbstractNioSocketChannel implements NioSocketChan
 		getConnection().startThread();
 		this.ioHandler = new IOHandler(getConnection().selector, selectionKey(), this);
 		this.connectTimeout = getConf().getInt("rpc.client.connect.timeout", Constant.DEFAULT_CLIENT_CONNECT_TIMEOUT);
+		super.serviceInit();
 	}
 
 	public void serviceStart() {
@@ -73,10 +74,13 @@ public class RpcClient extends AbstractNioSocketChannel implements NioSocketChan
 		} catch (Exception e) {
 			throw new RpcClientException("Unable to connect to the specified IP and port;" + e.getMessage());
 		}
+		super.serviceStart();
 	}
 
 	public void serviceStop() {
+//		ioHandler.heartbeatHandler.stop();
 		doClose();
+		super.serviceStop();
 	}
 
 	private void connect(SocketAddress remoteAddress) throws IOException, ConnectTimeoutException {
