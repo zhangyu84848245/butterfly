@@ -1,5 +1,7 @@
 package org.fantasy.bean.registry;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ServiceLoader;
@@ -12,7 +14,7 @@ import org.fantasy.util.ClassUtils;
 import org.fantasy.util.ReflectionUtils;
 import org.fantasy.util.StringUtils;
 
-public class ServiceRegistryFactory {
+public class ServiceRegistryFactory implements Closeable {
 
 	private List<ServiceRegistry> factory = new CopyOnWriteArrayList<ServiceRegistry>();
 	// SPI
@@ -50,8 +52,7 @@ public class ServiceRegistryFactory {
 		}
 		factory.add(serviceRegistry);
 	}
-	
-	
+
 	public ServiceRegistry get(String name) {
 		synchronized(factory) {
 			for(Iterator<ServiceRegistry> iterator = factory.iterator();iterator.hasNext();) {
@@ -62,4 +63,11 @@ public class ServiceRegistryFactory {
 		}
 		return null;
 	}
+
+	public void close() throws IOException {
+		factory.clear();
+		factory = null;
+		serviceLoader = null;
+	}
+
 }
