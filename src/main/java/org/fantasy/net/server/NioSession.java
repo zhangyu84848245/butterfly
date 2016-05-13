@@ -75,6 +75,8 @@ public class NioSession implements Closeable {
 		PacketHeader header = null;
 		try {
 			header = NetUtils.readRequestHeader(channel);
+			if(header == null)
+				throw new IOException("May be channel closed?");
 			read0(new IOCallback<Serializable>() {
 				public void call(Serializable object) {
 					requestProcessor.process(object);
@@ -96,7 +98,9 @@ public class NioSession implements Closeable {
 	private void skipFully() {
 		ByteBuffer buf = ByteBuffer.allocate(256);
 		try {
-			while((channel.read(buf)) != 0) {
+			// fix bug 
+			// -1 / 0
+			while((channel.read(buf)) > 0) {
 				buf.clear();
 			}
 		} catch (IOException e) {
