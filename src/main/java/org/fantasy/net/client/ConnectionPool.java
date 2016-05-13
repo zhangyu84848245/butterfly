@@ -1,5 +1,6 @@
 package org.fantasy.net.client;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.channels.spi.SelectorProvider;
 import java.util.concurrent.ThreadFactory;
@@ -8,7 +9,7 @@ import org.fantasy.conf.Configuration;
 import org.fantasy.net.server.Chooser;
 import org.fantasy.net.server.NamedThreadFactory;
 
-public class ConnectionPool  {
+public class ConnectionPool implements Closeable {
 	
 	
 	private NioConnection[] connections;
@@ -31,5 +32,13 @@ public class ConnectionPool  {
 	public NioConnection next() {
 		return chooser.next();
 	}
-	
+
+	public void close() throws IOException {
+		for(int i = 0; i < nThreads; i++) {
+			connections[i].stopThread();
+		}
+		chooser = null;
+		nThreads = 0;
+	}
+
 }
