@@ -1,7 +1,5 @@
 package org.fantasy.net;
 
-import java.lang.reflect.Constructor;
-
 import org.apache.log4j.Logger;
 import org.fantasy.conf.Configuration;
 import org.fantasy.util.ClassUtils;
