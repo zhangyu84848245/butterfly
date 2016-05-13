@@ -92,45 +92,14 @@ public class NioConnection extends Thread {
 			}
 		}
 	}
-
-//	public void close() {
-//		running = false;
-//		if(socket == null)
-//			return;
-//		try {
-//			if(socket.getOutputStream() != null) {
-//				socket.getOutputStream().close();
-//			}
-//		} catch (IOException e) {
-//			// ignore
-//		}
-//		try {
-//			if(socket.getInputStream() != null) {
-//				socket.getInputStream().close();
-//			}
-//		} catch (IOException e) {
-//			// ignore
-//		}
-//		if(channel != null) {
-//			try {
-//				channel.close();
-//			} catch (IOException e) {
-//				// ignore
-//			}
-//		}
-//		if(socket.getChannel() != null && socket.getChannel().isOpen()) {
-//			try {
-//				socket.getChannel().close();
-//			} catch (IOException e) {
-//				// ignore
-//			}
-//		}
-//		try {
-//			socket.close();
-//		} catch (IOException e) {
-//			// ignore
-//		}
-//		this.socket = null;
-//		this.channel = null;
-//	}
+	
+	
+	public void stopThread() {
+		if(STATE_UPDATER.get(this) == STARTED) {
+			if(STATE_UPDATER.compareAndSet(this, STARTED, SHUTDOWN)) {
+				running = false;
+				interrupt();
+			}
+		}
+	}
 }
