@@ -39,7 +39,6 @@ public class HeartbeatHandler implements Runnable {
 						wait(waitTime);
 					} catch (InterruptedException e) {
 						LOG.error(e.getMessage(), e);
-//						Thread.currentThread().interrupt();
 					}
 				}
 			}
