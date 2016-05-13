@@ -64,7 +64,11 @@ public class DefaultRpcFactory implements RpcFactory , Configurable {
 		if(pool == null)
 			pool = new ConnectionPool(conf);
 		return pool;
-		
 	}
 
+	public void close() throws IOException {
+		if(pool != null) {
+			pool.close();
+		}
+	}
 }
