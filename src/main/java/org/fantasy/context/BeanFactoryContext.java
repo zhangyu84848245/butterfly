@@ -1,11 +1,15 @@
 package org.fantasy.context;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -35,7 +39,7 @@ import org.fantasy.util.ReflectionUtils;
 
 
 
-public class BeanFactoryContext {
+public class BeanFactoryContext implements Closeable {
 
 	private static final Logger LOG = Logger.getLogger(BeanFactoryContext.class);
 	private ServiceRegistry serviceRegistry;
@@ -57,27 +61,50 @@ public class BeanFactoryContext {
 		this.port = conf.getInt(Constant.BIND_PORT_KEY);
 	}
 	
+//	public void register() {
+//		String[] beanNames = beanRegistry.getBeanNames();
+//		for(String name : beanNames) {
+//			GenericBean bean = beanRegistry.getBean(name);
+//			StringBuilder key = new StringBuilder();
+//			key.append(Constant.ZOOKEEPER_REGISTRY_ROOT).append(Constant.SLASH).append(bean.getBeanClassName());
+//			ZkPath path = new ZkPath(key.toString(), CreateMode.PERSISTENT);
+//			ZkData data = new ZkData(address, port, bean.getMethodList());
+//			try {
+//				/**  /fantasy/butterfly/interface name  */
+//				serviceRegistry.create(path, null);
+//				/**  /fantasy/butterfly/interface name/implement name  */
+//				key.append(Constant.SLASH).append(bean.getId());
+//				path = new ZkPath(key.toString(), CreateMode.EPHEMERAL);
+//				serviceRegistry.create(path, data);
+//			} catch (Exception e) {
+//				throw new ZookeeperRegistryException(e);
+//			}
+//		}
+////		 debug
+////		((ZookeeperRegistryWatcher)serviceRegistry).close();
+//	}
+	
 	public void register() {
 		String[] beanNames = beanRegistry.getBeanNames();
 		for(String name : beanNames) {
 			GenericBean bean = beanRegistry.getBean(name);
 			StringBuilder key = new StringBuilder();
+			/**  /fantasy/butterfly/interfaceName/implementName  */
 			key.append(Constant.ZOOKEEPER_REGISTRY_ROOT).append(Constant.SLASH).append(bean.getBeanClassName());
 			ZkPath path = new ZkPath(key.toString(), CreateMode.PERSISTENT);
 			ZkData data = new ZkData(address, port, bean.getMethodList());
 			try {
-				/**  /fantasy/butterfly/interface name  */
 				serviceRegistry.create(path, null);
-				/**  /fantasy/butterfly/interface name/implement name  */
 				key.append(Constant.SLASH).append(bean.getId());
+				path = new ZkPath(key.toString(), CreateMode.PERSISTENT);
+				serviceRegistry.create(path, null);
+				key.append(Constant.SLASH).append(data.toString());
 				path = new ZkPath(key.toString(), CreateMode.EPHEMERAL);
-				serviceRegistry.create(path, data);
+				serviceRegistry.create(path, null);
 			} catch (Exception e) {
 				throw new ZookeeperRegistryException(e);
 			}
 		}
-//		 debug
-//		((ZookeeperRegistryWatcher)serviceRegistry).close();
 	}
 	
 	private String getPath(GenericBean bean) {
@@ -100,6 +127,34 @@ public class BeanFactoryContext {
 			lb = getLBProvider().get("random");
 		return lb;
 	}
+//	public void subscribe(/**  Endpoint endpoint  */) {
+//		String[] beanNames = beanRegistry.getBeanNames();
+//		LoadBalancer lb = getLoadBalancer(conf.get(Constant.LOADBALANCE_TYPE_KEY, "random"));
+//		for(String beanName : beanNames) {
+//			GenericBean bean = beanRegistry.getBean(beanName);
+//			String key = getPath(bean);
+//			ZkPath path = new ZkPath(key);
+//			try {
+//				Set<RegistryValue> values = serviceRegistry.getData(path);
+//				if(values == null || values.size() == 0) {
+//					LOG.error("No server available");
+//					return;
+//				}
+//				List<RegistryValue> list = new ArrayList<RegistryValue>();
+//				list.addAll(values);
+//				// help gc
+//				values.clear();
+//				values = null;
+//				ServerName server = lb.assign(list);
+//				RpcClient client = createRpcClient(server, beanName);
+//				registerBeanInstance(beanName, client);
+//				clientMap.put(client, beanName);
+//			} catch (Exception e) {
+//				throw new ZookeeperRegistryException(e);
+//			}
+//		}
+//	}
+
 	public void subscribe(/**  Endpoint endpoint  */) {
 		String[] beanNames = beanRegistry.getBeanNames();
 		LoadBalancer lb = getLoadBalancer(conf.get(Constant.LOADBALANCE_TYPE_KEY, "random"));
@@ -108,16 +163,21 @@ public class BeanFactoryContext {
 			String key = getPath(bean);
 			ZkPath path = new ZkPath(key);
 			try {
-				Set<RegistryValue> values = serviceRegistry.getData(path);
-				if(values == null || values.size() == 0) {
+//				Set<RegistryValue> values = serviceRegistry.getData(path);
+				List<String> children = serviceRegistry.getChildren(path);
+				if(children == null || children.size() == 0) {
 					LOG.error("No server available");
 					return;
 				}
 				List<RegistryValue> list = new ArrayList<RegistryValue>();
-				list.addAll(values);
+				for(Iterator<String> iterator = children.iterator();iterator.hasNext();) {
+					String child = iterator.next();
+					list.add(new ZkData(child));
+				}
+//				list.addAll(values);
 				// help gc
-				values.clear();
-				values = null;
+				children.clear();
+				children = null;
 				ServerName server = lb.assign(list);
 				RpcClient client = createRpcClient(server, beanName);
 				registerBeanInstance(beanName, client);
@@ -168,17 +228,22 @@ public class BeanFactoryContext {
 		String beanId = clientMap.remove(oldClient);
 		oldClient.stop();
 		GenericBean bean = beanRegistry.getBean(beanId);
-		ZkPath path = new ZkPath(getPath(bean), CreateMode.EPHEMERAL);
 		ZkData data = new ZkData(address, port, bean.getMethodList());
+		String key = getPath(bean);
+		ZkPath path = new ZkPath(key + Constant.SLASH + data.toString());
 		List<RegistryValue> list = new ArrayList<RegistryValue>();
 		try {
-			serviceRegistry.deleteData(path, data);
-			Set<RegistryValue> values = serviceRegistry.getData(path);
+			serviceRegistry.delete(path);
+			path = new ZkPath(key);
+			List<String> values = serviceRegistry.getChildren(path);
 			if(values == null || values.size() == 0) {
 				LOG.error("No server available");
 				return;
 			}
-			list.addAll(values);
+			for(Iterator<String> iterator = values.iterator();iterator.hasNext();) {
+				String child = iterator.next();
+				list.add(new ZkData(child));
+			}
 			// help gc
 			values.clear();
 			values = null;
@@ -193,4 +258,56 @@ public class BeanFactoryContext {
 		registerBeanInstance(beanId, client);
 		clientMap.put(client, beanId);
 	}
+
+//	public void reconnect(RpcClient oldClient) {
+//		String address = oldClient.getBindAddress();
+//		int port = oldClient.getPort();
+//		String beanId = clientMap.remove(oldClient);
+//		oldClient.stop();
+//		GenericBean bean = beanRegistry.getBean(beanId);
+//		ZkPath path = new ZkPath(getPath(bean), CreateMode.EPHEMERAL);
+//		ZkData data = new ZkData(address, port, bean.getMethodList());
+//		List<RegistryValue> list = new ArrayList<RegistryValue>();
+//		try {
+//			serviceRegistry.deleteData(path, data);
+//			Set<RegistryValue> values = serviceRegistry.getData(path);
+//			if(values == null || values.size() == 0) {
+//				LOG.error("No server available");
+//				return;
+//			}
+//			list.addAll(values);
+//			// help gc
+//			values.clear();
+//			values = null;
+//		} catch (Exception e) {
+//			LOG.error(e.getMessage());
+//			throw new ZookeeperRegistryException(e);
+//		}
+//
+//		LoadBalancer lb = getLoadBalancer(conf.get(Constant.LOADBALANCE_TYPE_KEY));
+//		ServerName server = lb.assign(list);
+//		RpcClient client = createRpcClient(server, beanId);
+//		registerBeanInstance(beanId, client);
+//		clientMap.put(client, beanId);
+//	}
+
+	public void close() throws IOException {
+		Set<RpcClient> clients = clientMap.keySet();
+		for(Iterator<RpcClient> iterator = clients.iterator();iterator.hasNext();) {
+			RpcClient client = iterator.next();
+			client.getIoHandler().getHeartbeatHandler().stop();
+			client.stop();
+		}
+		clientMap.clear();
+		if(rpcFactory != null) {
+			rpcFactory.close();
+			rpcFactory = null;
+		}
+		
+		if(lbProvider != null) {
+			lbProvider.close();
+			lbProvider = null;
+		}
+	}
+
 }
